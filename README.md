@@ -1,4 +1,58 @@
 # Neo4j-ops_manager
+## NOM SERVER INSTALLATION
+Download the ops manager
+```
+wget https://dist.neo4j.org/ops-manager/1.7.2/neo4j-ops-manager-server-1.7.2-unix.tar.gz
+tar -xvf neo4j-ops-manager-server-1.7.2-unix.tar.gz
+```
+go to ops manager directory and create the pfx cert,but its not recommended for production
+change the -i with your cidr ip neo4j
+```
+java -jar ./lib/server.jar ssc -n localhost \
+	-o ./certificates \
+	-p changeit \
+	-d nom.example.com \
+	-i 192.168.10.1,172.16.10.1
+```
+create system service
+```
+sudo nano /etc/systemd/system/ops.service
+```
+append this
+```
+[unit]
+Description=Neo4j Ops Manager Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/home/neo4j/ops/bin/server \
+    --spring.neo4j.uri=neo4j://gds.pegadaian.co.id:7687 \
+    --spring.neo4j.authentication.username=ops.manager \
+    --spring.neo4j.authentication.password=Gadai123! \
+    --server.port=8888 \
+    --server.ssl.key-store-type=PKCS12 \
+    --server.ssl.key-store=file:/home/neo4j/ops/certificates/pegadaian.pfx \
+    --server.ssl.key-store-password=Gadai123! \
+    --grpc.server.port=9095 \
+    --grpc.server.security.key-store-type=PKCS12 \
+    --grpc.server.security.key-store=file:/home/neo4j/ops/certificates/pegadaian.pfx \
+    --grpc.server.security.key-store-password=Gadai123! \
+Restart=on-failure
+TimeoutSec=120
+Environment="JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64"
+Environment="LOGGING_FILE_NAME=/home/neo4j/ops/logs/output.log"
+[Install]
+WantedBy=multi-user.target
+```
+After that you can start the ops.service
+```
+sudo systemctl daemon-reload
+sudo systemctl start ops
+```
+
+## AGENT INSTALLATION
+go to each vm with already installed neo4j for deploying agent
 ```
 sudo nano /etc/hosts
 ```
